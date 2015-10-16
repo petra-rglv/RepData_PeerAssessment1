@@ -1,16 +1,12 @@
----
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
----
+# Reproducible Research: Peer Assessment 1
 
 
 ## Loading and preprocessing the data
 
 We load the data from the zip archive in the working directory.
 
-```{r loading the data}
+
+```r
 con <- unz("activity.zip", "activity.csv")
 dat <- read.csv(con)
 rm(con)
@@ -18,7 +14,8 @@ rm(con)
 
 Transform the data into data.table
 
-```{r preprocessing the data}
+
+```r
 library(data.table)
 dt <- data.table(dat)
 rm(dat)
@@ -29,66 +26,78 @@ rm(dat)
 Calculate the total number of steps taken per day. NAs are removed in the 
 summation.
 
-```{r sum per day}
+
+```r
 daysum <- dt[, sum(steps, na.rm=TRUE), by = date]
 ```
 
 Plot a histogram of the total number of steps taken each day.
 
-```{r hist}
+
+```r
 hist(daysum$V1, breaks=10,
      main="Histogram of total steps per day",
      xlab = "Total steps per day")
 ```
 
+![](PA1_template_files/figure-html/hist-1.png) 
+
 Calculate the mean and median of the number of steps taken per day.
 
-```{r calc mean and median}
+
+```r
 meansteps <- mean(daysum$V1)
 mediansteps <- median(daysum$V1)
 ```
 
-The mean of the total number of steps taken per day is `r meansteps` and the 
-median is `r mediansteps`.
+The mean of the total number of steps taken per day is 9354.2295082 and the 
+median is 10395.
 
 ## What is the average daily activity pattern?
 
 Calculate the average number of steps per interval across all days.
 
-```{r calc daypattern}
+
+```r
 daypattern <- dt[, mean(steps, na.rm=TRUE), by=interval]
 ```
 
 Plot the average daily activity pattern.
 
-```{r plot}
+
+```r
 plot(daypattern, type="l", ylab="Number of steps",
      main = "Average daily activity pattern")
 ```
 
+![](PA1_template_files/figure-html/plot-1.png) 
+
 Calculate which of the intervals, on average, contains the maximum number of 
 steps.
 
-```{r max interval}
+
+```r
 maxint <- daypattern[daypattern[,which.max(V1)],interval]
 ```
 
 The interval with maximum number of steps per day, averaged accros all days, is
-`r maxint`.
+835.
 
 ## Imputing missing values
 
 Calculate the total number of missing values.
 
-```{r num NAs}
+
+```r
 NAnum <- sum(is.na(dt$steps))
 ```
 
-There are `r NAnum` missing values in the dataset.
+There are 2304 missing values in the dataset.
 
 Fill the missing values with the mean of that 5-minute interval.
 
-```{r imputing NAs}
+
+```r
 setkey(dt, interval)
 setkey(daypattern, interval)
 dtpattern <- dt[daypattern]
@@ -102,37 +111,42 @@ invisible(dtimp[order(date)])
 Calculate the total number of steps taken per day in the dataset with the 
 imputed NAs.
 
-```{r sum per day imp}
+
+```r
 daysumimp <- dtimp[, sum(steps, na.rm=TRUE), by = date]
 ```
 
 Plot a histogram of the total number of steps taken each day (with the imputed 
 dataset).
 
-```{r hist_imp}
+
+```r
 hist(daysumimp$V1, breaks=10,
      main="Histogram of total steps per day (imputed NAs)",
      xlab="Total steps per day")
 ```
 
+![](PA1_template_files/figure-html/hist_imp-1.png) 
+
 Calculate the mean and median of the number of steps taken per day (imputed NAs).
 
-```{r calc mean and median imp}
+
+```r
 meanstepsimp <- mean(daysumimp$V1)
 medianstepsimp <- median(daysumimp$V1)
 ```
 
 The mean of the total number of steps taken per day according to the imputed 
-dataset is `r meanstepsimp` and the median is `r medianstepsimp`. So imputing 
-the NAs the mean and the median of the total number of steps per day are with correspondingly `r meanstepsimp-meansteps` and `r medianstepsimp-mediansteps` higher than in a dataset without imputation. 
+dataset is 1.0766189\times 10^{4} and the median is 1.0766189\times 10^{4}. So imputing 
+the NAs the mean and the median of the total number of steps per day are with correspondingly 1411.959171 and 371.1886792 higher than in a dataset without imputation. 
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
 First we add a factor for weekdays and weekends in the dataset with the imputed 
 missing values.
 
-```{r add week faktor}
 
+```r
 wend_list <- c('Saturday', 'Sunday')
 dtimp$wend <- factor((weekdays(as.Date(dtimp$date)) %in% wend_list), 
          levels=c(TRUE, FALSE), labels=c('weekend', 'weekday')) 
@@ -140,13 +154,15 @@ dtimp$wend <- factor((weekdays(as.Date(dtimp$date)) %in% wend_list),
 
 Calculate the average number of steps per interval across all weekday days and all weekend days in the dataset with the imputed missing values.
 
-```{r calc day pattern weekday/weekend, imputed set}
+
+```r
 daypatternimp <- dtimp[, mean(steps), by=list(interval, wend)]
 ```
 
 And make a plot of the calculated average number of steps (from the dataset with the imputed missing values).
 
-```{r graph}
+
+```r
 library(lattice) 
 xyplot(V1~interval|wend,
        data = daypatternimp,
@@ -155,3 +171,5 @@ xyplot(V1~interval|wend,
        main="Average number of steps taken, weekday/weekend days",
        ylab="Number of steps") 
 ```
+
+![](PA1_template_files/figure-html/graph-1.png) 
